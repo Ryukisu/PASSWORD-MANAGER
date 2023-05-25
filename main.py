@@ -110,22 +110,32 @@ class InputDataDialog:
 
     def submit_data(self):
         # Retrieve the entered values
-        site = self.site_entry.get()
-        username = self.username_entry.get()
-        email = self.email_entry.get()
-        password = self.password_entry.get()
+        site = encrypt(self.site_entry.get().encode(), encryptionKey)
+        username = encrypt(self.username_entry.get().encode(), encryptionKey)
+        email = encrypt(self.email_entry.get().encode(), encryptionKey)
+        password = encrypt(self.password_entry.get().encode(), encryptionKey)
+
+        # site = encrypt(popUp(text1).encode(), encryptionKey)
+        # username = encrypt(popUp(text2).encode(), encryptionKey)
+        # email = encrypt(popUp(text3).encode(), encryptionKey)
+        # password = encrypt(popUp(text4).encode(), encryptionKey)
 
         # Validate the data (you can add custom validation logic here)
-        if site and username and email and password:
+        if site and email and password:
             messagebox.showinfo("Success", "Data submitted successfully!")
             self.dialog.destroy()
         else:
             messagebox.showerror("Error", "Please fill in all fields.")
 
-        def process_data(self, site, username, email, password):
-            cursor.execute("INSERT INTO vault VALUES (?, ?, ?, ?)", (site, username, email, password))
+    def process_data(self, site, username, email, password):
+        # cursor.execute("INSERT INTO vault VALUES (?, ?, ?, ?)", (site, username, email, password))
+        # db.commit()
 
-            db.commit()
+        insert_fields = """INSERT INTO vault(site,username,email,password)
+        VALUES(?, ?, ?, ?)"""
+
+        cursor.execute(insert_fields, (site, username, email, password))
+        db.commit()
 
 def popUp(text):
     answer = simpledialog.askstring("input string", text)
@@ -370,6 +380,8 @@ def passwordVault():
         # passwordVault()
         # NOWY SPOSÓB ZBIERANIA DANYCH - JEDNO OKNO
         data = InputDataDialog(window)
+        data.process_data()
+        passwordVault()
 
     def removeEntry(input):
         cursor.execute("DELETE FROM vault WHERE id = ?", (input,))
