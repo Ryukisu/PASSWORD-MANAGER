@@ -81,61 +81,73 @@ def deleteDB():
 class InputDataDialog:
     def __init__(self, parent):
         self.dialog = Tk()
-        self.dialog.title("Input Data")
+        self.dialog.title("Wprowadź dane:")
 
-        # Create labels and entry fields for each input
-        site_label = Label(self.dialog, text="Site:")
+        dialog_width = 400
+        dialog_height = 200
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width - dialog_width) / 2
+        y = (screen_height - dialog_height) / 2
+        self.dialog.geometry(f'{dialog_width}x{dialog_height}+{int(x)}+{int(y)}')
+
+        site_label = Label(self.dialog, text="Strona:")
         site_label.pack()
         self.site_entry = Entry(self.dialog)
         self.site_entry.pack()
 
-        username_label = Label(self.dialog, text="Username:")
+        username_label = Label(self.dialog, text="Nazwa użytkownika:")
         username_label.pack()
         self.username_entry = Entry(self.dialog)
         self.username_entry.pack()
 
-        email_label = Label(self.dialog, text="Email:")
+        email_label = Label(self.dialog, text="E-mail:")
         email_label.pack()
         self.email_entry = Entry(self.dialog)
         self.email_entry.pack()
 
-        password_label = Label(self.dialog, text="Password:")
+        password_label = Label(self.dialog, text="Hasło:")
         password_label.pack()
         self.password_entry = Entry(self.dialog, show="*")
         self.password_entry.pack()
 
-        # Create a button to submit the data
         submit_button = Button(self.dialog, text="Submit", command=self.submit_data)
         submit_button.pack()
 
     def submit_data(self):
-        # Retrieve the entered values
         site = encrypt(self.site_entry.get().encode(), encryptionKey)
         username = encrypt(self.username_entry.get().encode(), encryptionKey)
         email = encrypt(self.email_entry.get().encode(), encryptionKey)
         password = encrypt(self.password_entry.get().encode(), encryptionKey)
+
+        insert_fields = """INSERT INTO vault(site,username,email,password)
+                VALUES(?, ?, ?, ?)"""
+
+        cursor.execute(insert_fields, (site, username, email, password))
+        db.commit()
 
         # site = encrypt(popUp(text1).encode(), encryptionKey)
         # username = encrypt(popUp(text2).encode(), encryptionKey)
         # email = encrypt(popUp(text3).encode(), encryptionKey)
         # password = encrypt(popUp(text4).encode(), encryptionKey)
 
-        # Validate the data (you can add custom validation logic here)
         if site and email and password:
             messagebox.showinfo("Success", "Data submitted successfully!")
             self.dialog.destroy()
         else:
             messagebox.showerror("Error", "Please fill in all fields.")
 
-    def process_data(self, site, username, email, password):
-        # cursor.execute("INSERT INTO vault VALUES (?, ?, ?, ?)", (site, username, email, password))
-        # db.commit()
+        passwordVault()
 
-        insert_fields = """INSERT INTO vault(site,username,email,password)
-        VALUES(?, ?, ?, ?)"""
-
-        cursor.execute(insert_fields, (site, username, email, password))
-        db.commit()
+    # def process_data(self, site, username, email, password):
+    #     # cursor.execute("INSERT INTO vault VALUES (?, ?, ?, ?)", (site, username, email, password))
+    #     # db.commit()
+    #
+    #     insert_fields = """INSERT INTO vault(site,username,email,password)
+    #     VALUES(?, ?, ?, ?)"""
+    #
+    #     cursor.execute(insert_fields, (site, username, email, password))
+    #     db.commit()
 
 def popUp(text):
     answer = simpledialog.askstring("input string", text)
@@ -379,9 +391,7 @@ def passwordVault():
         #
         # passwordVault()
         # NOWY SPOSÓB ZBIERANIA DANYCH - JEDNO OKNO
-        data = InputDataDialog(window)
-        data.process_data()
-        passwordVault()
+        InputDataDialog(window)
 
     def removeEntry(input):
         cursor.execute("DELETE FROM vault WHERE id = ?", (input,))
@@ -434,10 +444,12 @@ def passwordVault():
             btn = Button(window, text="Usuń", command=partial(removeEntry, array[i][0]))
             btn.grid(column=4, row=i+3, pady=10, padx=(0, 50))
 
-            def copyEntry():
-                pyperclip.copy(lbl2.cget("text"))
+            def copyEntry(input):
+                cursor.execute("SELECT password FROM vault WHERE id = ?", (input,))
+                array = cursor.fetchall()
+                pyperclip.copy((decrypt(array, encryptionKey)))
 
-            btn = Button(window, text="Kopiuj", command=copyEntry)
+            btn = Button(window, text="Kopiuj", command=partial(copyEntry, array[i][4]))
             btn.grid(column=4, row=i+3, pady=10, padx=(50, 0))
 
             i = i+1
