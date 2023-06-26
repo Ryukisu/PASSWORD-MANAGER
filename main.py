@@ -1,8 +1,6 @@
 # NECESSARY IMPORTS
 import tkinter
-import tkinter as tk
 from tkinter import *
-from tkinter import simpledialog
 from tkinter import ttk
 from tkinter import messagebox
 from functools import partial
@@ -192,33 +190,38 @@ class GeneratePasswordDialog:
         slider.grid(column=0, row=1, sticky=tkinter.W, padx=(50,40))
 
 
-        numbers_label = Label(self.dialog, text="Liczby:", bg="#9FFFCB",
-                               font=("Montserrat", 12))
-        numbers_label.grid(column=0, row=2, sticky=tkinter.W, padx=40, pady=5)
-
-        var1 = IntVar()
-        number_checkbox = Checkbutton(self.dialog, variable=var1, bg="#9FFFCB", activebackground="#9FFFCB",
-                                      onvalue=1, offvalue=0)
-        number_checkbox.grid(column=0, row=2, padx=30)
-
-        special_label = Label(self.dialog, text="Znaki specjalne:", bg="#9FFFCB",
-                               font=("Montserrat", 12))
-        special_label.grid(column=0, row=3, sticky=tkinter.W, padx=40, pady=5)
+        # numbers_label = Label(self.dialog, text="Liczby:", bg="#9FFFCB",
+        #                        font=("Montserrat", 12))
+        # numbers_label.grid(column=0, row=2, sticky=tkinter.W, padx=40, pady=5)
+        #
+        #
+        # var1 = IntVar()
+        # number_checkbox = Checkbutton(self.dialog, variable=var1, bg="#9FFFCB", activebackground="#9FFFCB",
+        #                               onvalue=1, offvalue=0)
+        # number_checkbox.grid(column=0, row=2, padx=30)
+        # var1.set(0)
+        # number_checkbox.var = var1
+        #
+        # special_label = Label(self.dialog, text="Znaki specjalne:", bg="#9FFFCB",
+        #                        font=("Montserrat", 12))
+        # special_label.grid(column=0, row=3, sticky=tkinter.W, padx=40, pady=5)
 
         password_label = Label(self.dialog, text="Twoje hasło:", bg="#9FFFCB",
                                font=("Montserrat", 12, "bold"))
         password_label.grid(column=0, row=4, sticky=tkinter.W, padx=40, pady=5)
 
         password_show = Entry(self.dialog, bg="#9FFFCB", font=("Montserrat", 12), width=420)
-        password_show.insert(0, "bardzodlugiehasłotestowe12354%@#!#")
+        password_show.insert(0, "")
         password_show.config(state="readonly", readonlybackground="#9FFFCB")
         password_show.grid(column=0, row=5, padx=20)
 
-        shuffle_label = Label(self.dialog, text="Wymieszaj:", bg="#9FFFCB",
-                               font=("Montserrat", 12))
-        shuffle_label.grid(column=0, row=6, sticky=tkinter.W, padx=40, pady=5)
+        # shuffle_label = Label(self.dialog, text="Wymieszaj:", bg="#9FFFCB",
+        #                        font=("Montserrat", 12))
+        # shuffle_label.grid(column=0, row=6, sticky=tkinter.W, padx=40, pady=5)
 
         # generating passwords
+
+
         def generate_words():
             # PAMIĘTAĆ O TYM ŻEBY BYŁY DUŻE I MAŁE LITERY
             password_words = []
@@ -232,22 +235,19 @@ class GeneratePasswordDialog:
             generated_password = ''.join(choice((str.upper, str.lower))(char) for char in generated_password)
             if len(generated_password) > maks:
                 generated_password = generated_password[0:maks]
-            else:
-                generated_password
             return generated_password
 
-        #
-        # def generate_special():
-        #     special_char = """!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
-        #     password_special = ''
-        #     count = 0
-        #     amount = random.randint(2,4)
-        #     while count <= amount:
-        #         password_special += special_char[random.randint(0, len(special_char)-1)]
-        #         count += 1
-        #
-        #     return password_special
-        #
+        def generate_special():
+            special_char = """!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+            password_special = ''
+            count = 0
+            amount = random.randint(2,4)
+            while count <= amount:
+                password_special += special_char[random.randint(0, len(special_char)-1)]
+                count += 1
+
+            return password_special
+
         def generate_numbers():
             password_number = ''
             amount = random.randint(2,5)
@@ -257,30 +257,15 @@ class GeneratePasswordDialog:
                 password_number += str(random.randint(0,9))
                 count += 1
             return password_number
-        #
-        # def generate_password(self, word_count, separator, special=True):
-        #     new_password = generate_words(word_count)
-        #     new_numbers = generate_numbers()
-        #     new_password.append(new_numbers)
-        #
-        #     if special:
-        #         new_special = generate_special()
-        #         new_password.append(new_special)
-        #
-        #
-        #
-        #     return separator.join(new_password)
+
         def generate_password():
             generated_password = generate_words()
             maks = len(generated_password)
             numbers = generate_numbers()
-            liczby_check = var1.get()
-            if liczby_check == 1:
-               generated_password = numbers + generated_password
-               generated_password = generated_password[0:maks]
-            else:
-                generated_password
-
+            special = generate_special()
+            generated_password = numbers + special + generated_password
+            generated_password = ''.join(random.sample(generated_password, len(generated_password)))
+            generated_password = generated_password[0:maks]
 
             password_show.config(state=NORMAL)
             password_show.delete(0, END)
@@ -294,6 +279,7 @@ class GeneratePasswordDialog:
 
         def copy_generated_password():
             pyperclip.copy(password_show.get())
+            self.dialog.destroy()
 
         btncopy = Button(self.dialog, text="KOPIUJ", command=copy_generated_password,
                                bg="#25A18E",
