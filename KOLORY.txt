@@ -1,0 +1,5 @@
+głowne , bg="#9FFFCB"
+guziki , bg="#25A18E"
+
+c1 , bg="#00A5CF"
+c2 , bg="#004E64"

@@ -1,8 +1,9 @@
 # NECESSARY IMPORTS
-
-# import tkinter as tk
+import tkinter
+import tkinter as tk
 from tkinter import *
 from tkinter import simpledialog
+from tkinter import ttk
 from tkinter import messagebox
 from functools import partial
 import sqlite3
@@ -16,6 +17,8 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.fernet import Fernet
 import random
+from random import choice
+from PIL import ImageTk
 
 '''
 # TO COPY - centrowanie okna aplikacji
@@ -30,7 +33,7 @@ window.geometry(f'{app_width}x{app_height}+{x}+{y}')
 
 # ENCRYPTION/ DECRYPTION
 backend = default_backend()
-salt = b'6969'
+salt = b'\xcf8\xd8\x82O\x17Q\x88\x85\xc2\xb3\xd5\x95\x13v\xdd'
 
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA256(),
@@ -82,81 +85,228 @@ class InputDataDialog:
     def __init__(self, parent):
         self.dialog = Tk()
         self.dialog.title("Wprowadź dane:")
+        self.dialog.iconbitmap("DragonPasswordManager_icon.ico")
 
-        dialog_width = 400
+        dialog_width = 350
         dialog_height = 200
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
         x = (screen_width - dialog_width) / 2
         y = (screen_height - dialog_height) / 2
         self.dialog.geometry(f'{dialog_width}x{dialog_height}+{int(x)}+{int(y)}')
+        self.dialog.configure(bg="#9FFFCB")
 
-        site_label = Label(self.dialog, text="Strona:")
-        site_label.pack()
+        self.dialog.columnconfigure(0, weight=1)
+        self.dialog.columnconfigure(1, weight=3)
+
+        site_label = Label(self.dialog, text="Strona*:", bg="#9FFFCB", font=("Montserrat", 10))
+        site_label.grid(column=0, row=0, sticky=tkinter.E, padx=5, pady=5)
         self.site_entry = Entry(self.dialog)
-        self.site_entry.pack()
+        self.site_entry.grid(column=1, row=0, sticky=tkinter.W, padx=5, pady=5)
 
-        username_label = Label(self.dialog, text="Nazwa użytkownika:")
-        username_label.pack()
+        username_label = Label(self.dialog, text="Nazwa użytkownika:", bg="#9FFFCB", font=("Montserrat", 10))
+        username_label.grid(column=0, row=1, sticky=tkinter.E, padx=5, pady=5)
         self.username_entry = Entry(self.dialog)
-        self.username_entry.pack()
+        self.username_entry.grid(column=1, row=1, sticky=tkinter.W, padx=5, pady=5)
 
-        email_label = Label(self.dialog, text="E-mail:")
-        email_label.pack()
+        email_label = Label(self.dialog, text="E-mail*:", bg="#9FFFCB", font=("Montserrat", 10))
+        email_label.grid(column=0, row=2, sticky=tkinter.E, padx=5, pady=5)
         self.email_entry = Entry(self.dialog)
-        self.email_entry.pack()
+        self.email_entry.grid(column=1, row=2, sticky=tkinter.W, padx=5, pady=5)
 
-        password_label = Label(self.dialog, text="Hasło:")
-        password_label.pack()
+        password_label = Label(self.dialog, text="Hasło*:", bg="#9FFFCB", font=("Montserrat", 10))
+        password_label.grid(column=0, row=3, sticky=tkinter.E, padx=5, pady=5)
         self.password_entry = Entry(self.dialog, show="*")
-        self.password_entry.pack()
+        self.password_entry.grid(column=1, row=3, sticky=tkinter.W, padx=5, pady=5)
 
-        submit_button = Button(self.dialog, text="Submit", command=self.submit_data)
-        submit_button.pack()
+        submit_button = Button(self.dialog, text="DODAJ", command=self.submit_data,
+                               bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+        submit_button.grid(column=1, row=4, sticky=tkinter.SW, padx=5, pady=5)
+
+        info = Label(self.dialog, text="* pole obowiązkowe", bg="#9FFFCB", font=("Montserrat", 8, "italic", "bold"))
+        info.grid(column=1, row=5, sticky=tkinter.NW, padx=5, pady=5)
+
 
     def submit_data(self):
-        site = encrypt(self.site_entry.get().encode(), encryptionKey)
-        username = encrypt(self.username_entry.get().encode(), encryptionKey)
-        email = encrypt(self.email_entry.get().encode(), encryptionKey)
-        password = encrypt(self.password_entry.get().encode(), encryptionKey)
-
-        insert_fields = """INSERT INTO vault(site,username,email,password)
-                VALUES(?, ?, ?, ?)"""
-
-        cursor.execute(insert_fields, (site, username, email, password))
-        db.commit()
-
-        # site = encrypt(popUp(text1).encode(), encryptionKey)
-        # username = encrypt(popUp(text2).encode(), encryptionKey)
-        # email = encrypt(popUp(text3).encode(), encryptionKey)
-        # password = encrypt(popUp(text4).encode(), encryptionKey)
+        site = self.site_entry.get()
+        username = self.username_entry.get()
+        email = self.email_entry.get()
+        password = self.password_entry.get()
 
         if site and email and password:
-            messagebox.showinfo("Success", "Data submitted successfully!")
+            site = encrypt(self.site_entry.get().encode(), encryptionKey)
+            username = encrypt(self.username_entry.get().encode(), encryptionKey)
+            email = encrypt(self.email_entry.get().encode(), encryptionKey)
+            password = encrypt(self.password_entry.get().encode(), encryptionKey)
+            insert_fields = """INSERT INTO vault(site,username,email,password)
+                    VALUES(?, ?, ?, ?)"""
+
+            cursor.execute(insert_fields, (site, username, email, password))
+            db.commit()
+            messagebox.showinfo("SUKCES!", "Dodano nowe dane.")
             self.dialog.destroy()
         else:
-            messagebox.showerror("Error", "Please fill in all fields.")
+            messagebox.showerror("BŁĄD!", "Proszę wypełnić wszystkie pola obowiązkowe.")
 
         passwordVault()
 
-    # def process_data(self, site, username, email, password):
-    #     # cursor.execute("INSERT INTO vault VALUES (?, ?, ?, ?)", (site, username, email, password))
-    #     # db.commit()
-    #
-    #     insert_fields = """INSERT INTO vault(site,username,email,password)
-    #     VALUES(?, ?, ?, ?)"""
-    #
-    #     cursor.execute(insert_fields, (site, username, email, password))
-    #     db.commit()
 
-def popUp(text):
-    answer = simpledialog.askstring("input string", text)
-    return answer
+class GeneratePasswordDialog:
+    def __init__(self, parent):
+        self.dialog = Tk()
+        self.dialog.title("Wygeneruj silne hasło")
+        self.dialog.iconbitmap("DragonPasswordManager_icon.ico")
+
+        dialog_width = 500
+        dialog_height = 400
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width - dialog_width) / 2
+        y = (screen_height - dialog_height) / 2
+        self.dialog.geometry(f'{dialog_width}x{dialog_height}+{int(x)}+{int(y)}')
+        self.dialog.configure(bg="#9FFFCB")
+
+        self.dialog.columnconfigure(0, weight=1)
+        self.dialog.columnconfigure(1, weight=3)
+
+
+        # window layout
+        lenght_label = Label(self.dialog, text="Długość hasła:", bg="#9FFFCB",
+                           font=("Montserrat", 12, "bold"))
+        lenght_label.grid(column=0, row=0, sticky=tkinter.W, padx=40, pady=(20,5))
+
+        slider_value = ttk.Label(self.dialog, text="8", background="#9FFFCB",
+                                 font=("Montserrat", 12, "bold"))
+
+        def slider_changed(event):
+            slider_value.config(text=f'{int(slider.get())}')
+            maks = int(slider.get())
+            return maks
+
+        slider_value.grid(column=0, row=1, sticky=tkinter.E, padx=(0,200))
+
+        slider = ttk.Scale(self.dialog, from_=1, to=48, orient=HORIZONTAL,
+                       length=200, variable=IntVar(), command=slider_changed)
+        slider.set(8)
+        slider.grid(column=0, row=1, sticky=tkinter.W, padx=(50,40))
+
+
+        numbers_label = Label(self.dialog, text="Liczby:", bg="#9FFFCB",
+                               font=("Montserrat", 12))
+        numbers_label.grid(column=0, row=2, sticky=tkinter.W, padx=40, pady=5)
+
+        var1 = IntVar()
+        number_checkbox = Checkbutton(self.dialog, variable=var1, bg="#9FFFCB", activebackground="#9FFFCB",
+                                      onvalue=1, offvalue=0)
+        number_checkbox.grid(column=0, row=2, padx=30)
+
+        special_label = Label(self.dialog, text="Znaki specjalne:", bg="#9FFFCB",
+                               font=("Montserrat", 12))
+        special_label.grid(column=0, row=3, sticky=tkinter.W, padx=40, pady=5)
+
+        password_label = Label(self.dialog, text="Twoje hasło:", bg="#9FFFCB",
+                               font=("Montserrat", 12, "bold"))
+        password_label.grid(column=0, row=4, sticky=tkinter.W, padx=40, pady=5)
+
+        password_show = Entry(self.dialog, bg="#9FFFCB", font=("Montserrat", 12), width=420)
+        password_show.insert(0, "bardzodlugiehasłotestowe12354%@#!#")
+        password_show.config(state="readonly", readonlybackground="#9FFFCB")
+        password_show.grid(column=0, row=5, padx=20)
+
+        shuffle_label = Label(self.dialog, text="Wymieszaj:", bg="#9FFFCB",
+                               font=("Montserrat", 12))
+        shuffle_label.grid(column=0, row=6, sticky=tkinter.W, padx=40, pady=5)
+
+        # generating passwords
+        def generate_words():
+            # PAMIĘTAĆ O TYM ŻEBY BYŁY DUŻE I MAŁE LITERY
+            password_words = []
+            with open("assets/words.txt", "r") as file:
+                word_list = list(file)
+                maks = int(slider.get())
+                for words in range(0, 8):
+                    random_index = random.randint(0, len(word_list) - 1)
+                    password_words.append(word_list[random_index].rstrip())
+            generated_password = ''.join(password_words)
+            generated_password = ''.join(choice((str.upper, str.lower))(char) for char in generated_password)
+            if len(generated_password) > maks:
+                generated_password = generated_password[0:maks]
+            else:
+                generated_password
+            return generated_password
+
+        #
+        # def generate_special():
+        #     special_char = """!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+        #     password_special = ''
+        #     count = 0
+        #     amount = random.randint(2,4)
+        #     while count <= amount:
+        #         password_special += special_char[random.randint(0, len(special_char)-1)]
+        #         count += 1
+        #
+        #     return password_special
+        #
+        def generate_numbers():
+            password_number = ''
+            amount = random.randint(2,5)
+            count = 0
+
+            while count <= amount:
+                password_number += str(random.randint(0,9))
+                count += 1
+            return password_number
+        #
+        # def generate_password(self, word_count, separator, special=True):
+        #     new_password = generate_words(word_count)
+        #     new_numbers = generate_numbers()
+        #     new_password.append(new_numbers)
+        #
+        #     if special:
+        #         new_special = generate_special()
+        #         new_password.append(new_special)
+        #
+        #
+        #
+        #     return separator.join(new_password)
+        def generate_password():
+            generated_password = generate_words()
+            maks = len(generated_password)
+            numbers = generate_numbers()
+            liczby_check = var1.get()
+            if liczby_check == 1:
+               generated_password = numbers + generated_password
+               generated_password = generated_password[0:maks]
+            else:
+                generated_password
+
+
+            password_show.config(state=NORMAL)
+            password_show.delete(0, END)
+            password_show.insert(0, generated_password)
+            password_show.config(state="readonly")
+
+        btn = Button(self.dialog, text="GENERUJ", command=generate_password,
+                               bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+        btn.grid(column=0, row=7, sticky=tkinter.W, padx=(40,140), pady=5)
+
+        def copy_generated_password():
+            pyperclip.copy(password_show.get())
+
+        btncopy = Button(self.dialog, text="KOPIUJ", command=copy_generated_password,
+                               bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+        btncopy.grid(column=0, row=7, sticky=tkinter.W, padx=(140,40), pady=5)
+
+
 
 # MAIN WINDOW
 window = Tk()
 window.title("Dragon Password Manager")
 window.iconbitmap("DragonPasswordManager_icon.ico")
+window.configure(bg="#9FFFCB")
 
 
 def hashPassword(input):
@@ -172,7 +322,7 @@ def firstLogin():
 
     # wyśrodkowanie okna aplikacji
     app_width = 400
-    app_height = 200
+    app_height = 230
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width - app_width) / 2
@@ -180,23 +330,23 @@ def firstLogin():
     window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
     # zawartość okna pierwszego logowania
-    lbl = Label(window, text="Utwórz główne hasło")
+    lbl = Label(window, text="Utwórz główne hasło", bg="#9FFFCB", font=("Montserrat", 12))
     lbl.config(anchor=CENTER)
     lbl.pack(pady=(10, 5))
 
-    passwordEntry = Entry(window, width=30, show="*")
+    passwordEntry = Entry(window, width=30, show="*", font=10)
     passwordEntry.pack()
     passwordEntry.focus()
 
-    lbl2 = Label(window, text="Wprowadź ponownie główne hasło")
+    lbl2 = Label(window, text="Wprowadź ponownie główne hasło", bg="#9FFFCB", font=("Montserrat", 12))
     lbl2.config()
     lbl2.pack(pady=(20, 5))
 
-    passwordCheckEntry = Entry(window, width=30, show="*")
+    passwordCheckEntry = Entry(window, width=30, show="*", font=10)
     passwordCheckEntry.pack()
     passwordCheckEntry.focus()
 
-    lblIncorect = Label(window, text="")
+    lblIncorect = Label(window, text="", bg="#9FFFCB")
     lblIncorect.config()
     lblIncorect.pack(pady=(10, 5))
 
@@ -205,7 +355,7 @@ def firstLogin():
 
     def saveMasterPassword():
         if passwordEntry.get() == passwordCheckEntry.get():
-            lblIncorect.config(text="")
+            lblIncorect.config(text="", bg="#9FFFCB")
 
             sql = "DELETE FROM masterPassword WHERE id = 1"
 
@@ -225,9 +375,10 @@ def firstLogin():
 
             recoveryScreen(key)
         else:
-            lblIncorect.config(text="Hasła nie są identyczne!")
+            lblIncorect.config(text="Hasła nie są identyczne!", bg="#9FFFCB", font=("Montserrat", 10, "bold"))
 
-    btn = Button(window, text="Zatwierdź", command=saveMasterPassword)
+    btn = Button(window, text="Zatwierdź", command=saveMasterPassword, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=10)
     # Umozliwienie zatwierdzenia hasła poprzez wciśnięcie klawisza ENTER
     window.bind('<Return>', returnPressed)
@@ -237,8 +388,8 @@ def recoveryScreen(key):
         widget.destroy()
 
     # wyśrodkowanie okna aplikacji
-    app_width = 400
-    app_height = 200
+    app_width = 600
+    app_height = 210
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width - app_width) / 2
@@ -246,24 +397,26 @@ def recoveryScreen(key):
     window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
     # zawartość okna z kluczem bezpieczeństwa
-    lbl = Label(window, text="Zapisz ten klucz, aby móc zresetować hasło główne")
+    lbl = Label(window, text="Zapisz ten klucz, aby móc zresetować hasło główne", bg="#9FFFCB", font=("Montserrat", 13, "bold"))
     lbl.config(anchor=CENTER)
     lbl.pack(pady=(10, 5))
 
-    lbl2 = Label(window, text=key)
+    lbl2 = Label(window, text=key, bg="#9FFFCB", font=("Montserrat", 14, "bold"))
     lbl2.config()
     lbl2.pack(pady=(20, 5))
 
     def copyKey():
         pyperclip.copy(lbl2.cget("text"))
 
-    btn = Button(window, text="Skopiuj klucz", command=copyKey)
+    btn = Button(window, text="Skopiuj klucz", command=copyKey, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=5)
 
     def done():
         passwordVault()
 
-    btn = Button(window, text="Zrobione!", command=done)
+    btn = Button(window, text="Zrobione!", command=done, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=5)
 
 def resetScreen():
@@ -280,15 +433,15 @@ def resetScreen():
     window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
     # zawartość okna resetowania hasła głównego
-    lbl = Label(window, text="Wprowadź klucz bezpieczeństwa")
+    lbl = Label(window, text="Wprowadź klucz bezpieczeństwa", bg="#9FFFCB", font=("Montserrat", 12))
     lbl.config(anchor=CENTER)
     lbl.pack()
 
-    txt = Entry(window, width=30)
+    txt = Entry(window, width=30, font=10)
     txt.pack(pady=5)
     txt.focus()
 
-    lbl2 = Label(window)
+    lbl2 = Label(window, bg="#9FFFCB")
     lbl2.config(anchor=CENTER)
     lbl2.pack()
 
@@ -303,9 +456,10 @@ def resetScreen():
             firstLogin()
         else:
             txt.delete(0, "end")
-            lbl2.config(text="Nieprawidłowy klucz")
+            lbl2.config(text="Nieprawidłowy klucz", font=("Montserrat", 10, "bold"))
 
-    btn = Button(window, text="Sprawdź klucz", command=checkRecoveryKey)
+    btn = Button(window, text="Sprawdź klucz", command=checkRecoveryKey, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=5)
 
 def loginScreen():
@@ -322,15 +476,15 @@ def loginScreen():
     window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
     # zawartość okna logowania
-    lbl = Label(window, text="Wprowadź główne hasło")
+    lbl = Label(window, bg="#9FFFCB", text="Wprowadź główne hasło", font=("Montserrat", 12))
     lbl.config(anchor=CENTER)
     lbl.pack()
 
-    masterPasswordEntry = Entry(window, width=30, show="*")
+    masterPasswordEntry = Entry(window, width=30, show="*", font=10)
     masterPasswordEntry.pack(pady=5)
     masterPasswordEntry.focus()
 
-    lbl2 = Label(window)
+    lbl2 = Label(window, bg="#9FFFCB")
     lbl2.pack()
 
     def getMasterPassword():
@@ -350,10 +504,12 @@ def loginScreen():
             passwordVault()
         else:
             masterPasswordEntry.delete(0, "end")
-            lbl2.config(text="Nieprawidłowe hasło")
+            lbl2.config(text="Nieprawidłowe hasło", bg="#9FFFCB", font=("Montserrat", 12, "bold"))
+            window.destroy()
 
 
-    btn = Button(window, text="Zatwierdź", command=checkMasterpassword)
+    btn = Button(window, text="Zatwierdź", command=checkMasterpassword, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=10)
     # Umozliwienie zatwierdzenia hasła poprzez wciśnięcie klawisza ENTER
     window.bind('<Return>', returnPressed)
@@ -361,36 +517,20 @@ def loginScreen():
     def resetPassword():
         resetScreen()
 
-    btn = Button(window, text="Zresetuj hasło", command=resetPassword)
+    btn = Button(window, text="Zresetuj hasło", command=resetPassword, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
     btn.pack(pady=5)
 
 
+# noinspection PyTypeChecker
 def passwordVault():
     for widget in window.winfo_children():
         widget.destroy()
 
     # Funkcje potrzebne do działania menadżera
+    def generatePassword():
+        GeneratePasswordDialog(window)
     def addEntry():
-        # STARY SPOSÓB DODAWANIA HASŁA - DANE OSOBNO ZBIERANE
-        # text1 = "Strona"
-        # text2 = "Username"
-        # text3 = "E-mail"
-        # text4 = "Password"
-        #
-        #
-        # site = encrypt(popUp(text1).encode(), encryptionKey)
-        # username = encrypt(popUp(text2).encode(), encryptionKey)
-        # email = encrypt(popUp(text3).encode(), encryptionKey)
-        # password = encrypt(popUp(text4).encode(), encryptionKey)
-        #
-        # insert_fields = """INSERT INTO vault(site,username,email,password)
-        # VALUES(?, ?, ?, ?)"""
-        #
-        # cursor.execute(insert_fields, (site, username, email, password))
-        # db.commit()
-        #
-        # passwordVault()
-        # NOWY SPOSÓB ZBIERANIA DANYCH - JEDNO OKNO
         InputDataDialog(window)
 
     def removeEntry(input):
@@ -400,28 +540,43 @@ def passwordVault():
         passwordVault()
 
     # centrowanie okna aplikacji
-    app_width = 1000
-    app_height = 500
+    app_width = 1450
+    app_height = 800
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width - app_width) / 2
     y = (screen_height - app_height) / 2
     window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
-    lbl = Label(window, text="Dragon Password Manager", font=52)
-    lbl.grid(column=1)
+    vaultFrame = Frame(window, bg="#9FFFCB")
+    vaultFrame.grid()
 
-    btn = Button(window, text="Dodaj hasło", command=addEntry)
-    btn.grid(column=1, pady=10)
+    menuFrame = Frame(vaultFrame, bg="#9FFFCB")
+    menuFrame.grid(row=0, column=0)
 
-    lbl = Label(window, text="Site")
-    lbl.grid(row=2, column=0, padx=80)
-    lbl = Label(window, text="Username")
-    lbl.grid(row=2, column=1, padx=80)
-    lbl = Label(window, text="E-mail")
-    lbl.grid(row=2, column=2, padx=80)
-    lbl = Label(window, text="Password")
-    lbl.grid(row=2, column=3, padx=80)
+    lbl = Label(menuFrame, text="Dragon Password Manager", bg="#9FFFCB", font=("Montserrat", 14, "bold"), padx=10, pady=10)
+    lbl.grid(column=0, row=0, sticky=tkinter.E)
+
+    logo = ImageTk.PhotoImage(file="assets/logo.png")
+    logo_lbl = Label(menuFrame, image=logo, bg="#9FFFCB")
+    logo_lbl.image = logo
+    logo_lbl.grid(column=0, row=1)
+
+    btn = Button(menuFrame, text="Dodaj hasło", command=addEntry, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+    btn.grid(column=0, pady=10, padx=(0,105), row=2)
+    btn = Button(menuFrame, text="Generuj hasło", command=generatePassword, bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+    btn.grid(column=0, pady=10, padx=(110,0), row=2)
+
+    lbl = Label(vaultFrame, text="Strona", bg="#9FFFCB", font=("Montserrat", 14, "bold"))
+    lbl.grid(row=0, column=1, padx=(0,0), pady=(150,0))
+    lbl = Label(vaultFrame, text="Nazwa", bg="#9FFFCB", font=("Montserrat", 14, "bold"))
+    lbl.grid(row=0, column=2, padx=(10,0), pady=(150,0))
+    lbl = Label(vaultFrame, text="E-mail", bg="#9FFFCB", font=("Montserrat", 14, "bold"))
+    lbl.grid(row=0, column=3, padx=(20,0), pady=(150,0))
+    lbl = Label(vaultFrame, text="Hasło", bg="#9FFFCB", font=("Montserrat", 14, "bold"))
+    lbl.grid(row=0, column=4, padx=(30,20), pady=(150,0))
 
     cursor.execute("SELECT * FROM vault")
     if(cursor.fetchall() != None):
@@ -432,25 +587,38 @@ def passwordVault():
             if (len(array) == 0):
                 break
 
-            lbl1 = Label(window, text=(decrypt(array[i][1], encryptionKey)), font=("Montserrat", 12))
-            lbl1.grid(column=0, row=i+3)
-            lbl1 = Label(window, text=(decrypt(array[i][2], encryptionKey)), font=("Montserrat", 12))
-            lbl1.grid(column=1, row=i+3)
-            lbl1 = Label(window, text=(decrypt(array[i][3], encryptionKey)), font=("Montserrat", 12))
-            lbl1.grid(column=2, row=i+3)
-            lbl2 = Label(window, text=(decrypt(array[i][4], encryptionKey)), font=("Montserrat", 12))
-            lbl2.grid(column=3, row=i+3)
+            lbl1 = Entry(vaultFrame, bg="#9FFFCB", font=("Montserrat", 12))
+            lbl1.insert(0, (decrypt(array[i][1], encryptionKey)))
+            lbl1.config(state="readonly", readonlybackground="#9FFFCB", bd=0)
+            lbl1.grid(column=1, row=i+3, padx=(40,10))
+            lbl1 = Entry(vaultFrame, bg="#9FFFCB", font=("Montserrat", 12))
+            lbl1.insert(0, (decrypt(array[i][2], encryptionKey)))
+            lbl1.config(state="readonly", readonlybackground="#9FFFCB", bd=0)
+            lbl1.grid(column=2, row=i+3, padx=(20,20))
+            lbl1 = Entry(vaultFrame, bg="#9FFFCB", font=("Montserrat", 12))
+            lbl1.insert(0, (decrypt(array[i][3], encryptionKey)))
+            lbl1.config(state="readonly", readonlybackground="#9FFFCB", bd=0)
+            lbl1.grid(column=3, row=i+3, padx=(30,0))
+            lbl2 = Entry(vaultFrame, bg="#9FFFCB", font=("Montserrat", 12))
+            lbl2.insert(0, (decrypt(array[i][4], encryptionKey)))
+            lbl2.config(state="readonly", readonlybackground="#9FFFCB", bd=0)
+            lbl2.grid(column=4, row=i+3, padx=(50,20))
 
-            btn = Button(window, text="Usuń", command=partial(removeEntry, array[i][0]))
-            btn.grid(column=4, row=i+3, pady=10, padx=(0, 50))
+            btn = Button(vaultFrame, text="Usuń", command=partial(removeEntry, array[i][0]), bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+            btn.grid(column=0, row=i+3, pady=10, padx=(0, 80))
 
             def copyEntry(input):
                 cursor.execute("SELECT password FROM vault WHERE id = ?", (input,))
-                array = cursor.fetchall()
-                pyperclip.copy((decrypt(array, encryptionKey)))
-
-            btn = Button(window, text="Kopiuj", command=partial(copyEntry, array[i][4]))
-            btn.grid(column=4, row=i+3, pady=10, padx=(50, 0))
+                data = cursor.fetchone()
+                if data:
+                    password = decrypt(data[0], encryptionKey)
+                    password= str(password)
+                    password = password[2:(len(password)-1)]
+                    pyperclip.copy(password)
+            btn = Button(vaultFrame, text="Kopiuj hasło", command= partial(copyEntry, array[i][0]), bg="#25A18E",
+                 font=("Montserrat", 10, "bold"), fg="white")
+            btn.grid(column=0, row=i+3, pady=10, padx=(80, 0))
 
             i = i+1
 
@@ -467,7 +635,7 @@ else:
 
 window.mainloop()
 
-# TODO:
+# TODO: - scrollbar;
 #       - opcja zmiany hasła w danej domenie dla danego użytkownika;
 #       - opcja kopiowania hasła do schowka;
 #       - generuj bezpieczne hasło;
